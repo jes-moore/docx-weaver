@@ -1,0 +1,38 @@
+{
+	"initializeCommand": "make build-docker-image",
+	"image": "word-weaver",
+	"name": "word-weaver-dev",
+	"customizations":{
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools",
+				"ms-python.python",
+				"ms-toolsai.jupyter",
+				"mhutchie.git-graph",
+				"ms-python.pylint",
+				"ms-python.mypy-type-checker",
+				"ms-python.black-formatter",
+				"ms-azuretools.vscode-docker",
+				"GitHub.copilot",
+				"ms-vscode.makefile-tools",
+				"github.vscode-github-actions",
+				"GitHub.copilot-chat",
+				"ms-python.vscode-pylance",
+				"ms-python.autopep8",
+				"mechatroner.rainbow-csv"
+			]
+		},
+		"settings": {
+			"terminal.integrated.shell.linux": null,
+			"extensions.verifySignature" : false
+		}
+	},
+	"remoteUser": "appuser",
+	"runArgs": [
+		"--env-file", "secrets.env",
+		"--network", "host",
+		"--name", "${localWorkspaceFolderBasename}-vscode-dev"
+	],
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/appuser/app,type=bind,consistency=cached",
+	"workspaceFolder": "/home/appuser/app"
+}9
