@@ -13,6 +13,16 @@ log = logging.getLogger(__name__)
 class WordWeaver:
     """
     Class to Convert/Translate and otherwise mutate Word Documents
+    filename: str - Path to the Word Document
+    purpose: str - Purpose of the Translation, used in all prompts
+    paragraph_prompt: str | None - Prompt for Paragraphs (if any)
+    table_prompt: str | None - Prompt for Tables (if any)
+    mode: Literal["comments_only", "transform_only", "transform_and_comments"]
+        - Mode of Operation
+            - comments_only: Only add comments to the document
+            - transform_only: Only transform the document inplace
+            - transform_and_comments: Transform the document and put original text
+            in comments
     """
     def __init__(
         self,
@@ -20,9 +30,9 @@ class WordWeaver:
         purpose: str,
         paragraph_prompt: str | None,
         table_prompt: str | None,
-        weaver_type: Literal["comments_only", "weave_only", "weave_and_comments"],
+        mode: Literal["comments_only", "transform_only", "transform_and_comments"],
     ):
-        assert weaver_type in ["comments_only", "weave_only", "weave_and_comments"]
+        assert mode in ["comments_only", "transform_only", "transform_and_comments"]
         assert isinstance(purpose, str)
         assert isinstance(paragraph_prompt, str) or paragraph_prompt is None
         self.settings = WordWeaverSettings()
@@ -31,7 +41,7 @@ class WordWeaver:
         self.table_prompt = table_prompt
         self.paragraph_prompt = paragraph_prompt
         self.purpose = purpose
-        self.weaver_type = weaver_type
+        self.mode = mode
 
     def weave_document(self, output_fn: str):
         """
@@ -71,11 +81,10 @@ class WordWeaver:
                     'type': "paragraph",
                     "runs": word.transform_paragraph(
                         paragraph=paragraph,
-                        ix_para=ix_para,
                         paragraph_prompt=self.paragraph_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False
+                        mode=self.mode
                     )
                 }
         log.info("Finished Processing Paragraphs")
@@ -122,11 +131,10 @@ class WordWeaver:
                     "type": "paragraph",
                     "runs": word.transform_paragraph(
                         paragraph,
-                        ix_para=ix_para,
                         paragraph_prompt=self.paragraph_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        mode=self.mode,
                         root_type="header"
                     )
                 }
@@ -139,11 +147,10 @@ class WordWeaver:
                     "type": "paragraph",
                     "runs": word.transform_paragraph(
                         paragraph,
-                        ix_para=ix_para,
                         paragraph_prompt=self.paragraph_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        mode=self.mode,
                         root_type="header"
                     )
                 }
@@ -156,11 +163,10 @@ class WordWeaver:
                     "type": "paragraph",
                     "runs": word.transform_paragraph(
                         paragraph,
-                        ix_para=ix_para,
                         paragraph_prompt=self.paragraph_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        mode=self.mode,
                         root_type="header"
                     )
                 }
@@ -173,11 +179,10 @@ class WordWeaver:
                     "type": "paragraph",
                     "runs": word.transform_paragraph(
                         paragraph,
-                        ix_para=ix_para,
                         paragraph_prompt=self.paragraph_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        mode=self.mode,
                         root_type="header"
                     )
                 }

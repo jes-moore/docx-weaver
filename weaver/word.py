@@ -4,10 +4,11 @@ functions
 """
 
 # General Imports
-from typing import Any
+from typing import Any, Literal
 import logging
 import os
 import shutil
+import time
 import copy
 import string
 import json
@@ -38,19 +39,19 @@ def transform_table(
         for ix_row_cell, cell in enumerate(row.cells):
             if cell.text.strip() in transformed_texts:
                 # Skip This Strange Hook For Merged Cells
-                # DO NOT CHANGE THIS LIGHTLY
                 continue
-            part_original = ""  # Aggregate transaltion across entire cell
-            total_original = ""  # Aggregate transaltion across entire cell
-            total_translation = ""  # Aggregate transaltion across entire cell
+            # Aggregate transaltion across entire cell
+            part_original = ""
+            total_original = ""
+            total_translation = ""
             row_cell_para_data = {}
             for ix_row_cell_para, paragraph in enumerate(cell.paragraphs):
                 if "::::" in paragraph.text:
                     log.debug("Skipping Already Translated Paragraph")
                     continue
-                # if ("Page" in paragraph.text):
-                #     log.debug("Skipping Already Translated Paragraph")
-                #     continue
+                if "Page" in paragraph.text:
+                    log.debug("Skipping Already Translated Paragraph")
+                    continue
                 if paragraph.text in ["", "\xa0", "\n"]:
                     log.debug("No Processing For Input Paragraph")
                     continue
@@ -131,11 +132,10 @@ def transform_table(
 
 def transform_paragraph(
     paragraph: docx.text.paragraph.Paragraph,
-    ix_para: int,
     paragraph_prompt: str,
     purpose: str,
     model_name: str,
-    write_comments: bool,
+    mode: Literal["comments_only", "transform_only", "transform_and_comments"],
     root_type: str = "paragraph",
 ) -> None:
     """
@@ -157,19 +157,29 @@ def transform_paragraph(
             # Store Comment Text For Later Update
             original_text = str(copy.deepcopy(run.text))
 
-            # Update To Translate Text
-            run.text, translated, _ = transform_text(
-                src_text=run.text,
-                prompt=paragraph_prompt,
-                purpose=purpose,
-                model_name=model_name
-            )
+            if mode in ["comments_only"]:
+                # Get Translation Only (Comment In this case)
+                comment, translated, _ = transform_text(
+                    src_text=run.text,
+                    prompt=paragraph_prompt,
+                    purpose=purpose,
+                    model_name=model_name
+                )
+            else:
+                # Update To Translate Text
+                run.text, translated, _ = transform_text(
+                    src_text=run.text,
+                    prompt=paragraph_prompt,
+                    purpose=purpose,
+                    model_name=model_name
+                )
+                comment = original_text
             if translated:  # Record For Comment
                 # Can't Add Comment To Header // Footer
                 if root_type not in ["header", "footer"]:
-                    if write_comments:
+                    if mode in ["transform_and_comments", "comments_only"]:
                         run.add_comment(
-                            text=original_text,
+                            text=comment,
                             author='WordWeaver',
                             initials="WW",
                             dtime=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d")
@@ -309,22 +319,32 @@ def generate_transformation(
         Input Text: {src_text}
         """
     )
-    completions = openai.chat.completions.create(
-            model=model_name,
-            messages=[{"role":"user","content":user_prompt}],
-            max_tokens=len(src_text) + 50,
-            n=1,
-            stop=None,
-            response_format={ "type": "json_object" },
-    )
-    message = completions.choices[0].message.content
-    if message is None:
-        raise ValueError("No Response From OpenAI")
-    assert message is not None
-    message = json.loads(message)
+    for i in range(5):
+        try:
+            completions = openai.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role":"user","content":user_prompt}],
+                    max_tokens=len(src_text) + 50,
+                    n=1,
+                    stop=None,
+                    response_format={ "type": "json_object" },
+            )
+            message = completions.choices[0].message.content
+            if message is None:
+                raise ValueError("No Response From OpenAI")
+            assert message is not None
+            message = json.loads(message)
+            assert isinstance(message, dict)
+            if "tgt_text" not in message:
+                raise ValueError("No Translation Found")
+            break
+        except Exception as e: # pylint: disable=broad-except
+            if i < 5:
+                time.sleep(1)  # wait for 1 second before trying again
+                continue
+            else:
+                raise e  # if after 3 attempts it still fails, raise the exception.
     assert isinstance(message, dict)
-    if "tgt_text" not in message:
-        raise ValueError("No Translation Found")
     return message["tgt_text"]
 
 
