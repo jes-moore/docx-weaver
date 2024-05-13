@@ -9,9 +9,7 @@ WordWeaver is a Python class designed to convert, translate, and modify Word doc
 - **Transform and Comments**: Transforms the document's text and retains the original text in comments for reference.
 
 ## Requirements
-- Python 3.x
-- python-docx
-- tqdm
+- See Dockerfile / Devcontainer
 
 ## Installation
 To use WordWeaver, install the required packages using pip:
