@@ -28,14 +28,15 @@ class WordWeaver:
         self,
         filename: str,
         purpose: str,
-        paragraph_prompt: str | None,
+        paragraph_prompt: str,
         table_prompt: str | None,
         mode: Literal["comments_only", "transform_only", "transform_and_comments"],
+        openai_model_name: Literal["gpt-4-turbo", "gpt-3.5-turbo"] = "gpt-3.5-turbo"
     ):
         assert mode in ["comments_only", "transform_only", "transform_and_comments"]
         assert isinstance(purpose, str)
-        assert isinstance(paragraph_prompt, str) or paragraph_prompt is None
-        self.settings = WordWeaverSettings()
+        assert isinstance(paragraph_prompt, str)
+        self.settings = WordWeaverSettings(openai_model_name=openai_model_name)
         self.filename = filename
         self.document = Document(filename)
         self.table_prompt = table_prompt
@@ -48,10 +49,19 @@ class WordWeaver:
         Transforms the entire document
         """
         assert output_fn.endswith(".docx")
-        self._weave_paragraphs()
-        self._weave_tables()
-        self._weave_section_paragraphs()
-        self._weave_section_headers()
+
+        # Paragraphs are always translated
+        para_data = self._weave_paragraphs()
+        section_para_data = self._weave_section_paragraphs()
+
+        # Tables and Section Paragraphs/Headers are only run if transforming
+        if self.mode in ["transform_only", "transform_and_comments"]:
+            table_row_data = self._weave_tables()
+            section_header_data = self._weave_section_headers()
+        else:
+            table_row_data = {}
+            section_para_data = {}
+            section_header_data = {}
         self.document.save(output_fn)
         log.info("Finished Weaving Document: %s", output_fn)
         # output_fn_unzipped = word.unpack_word_document(output_fn=output_fn)
@@ -59,9 +69,16 @@ class WordWeaver:
         #     output_fn=output_fn,
         #     output_fn_unzipped=output_fn_unzipped
         # )
+        return {
+            "output_fn": output_fn,
+            "paragraphs": para_data,
+            "tables": table_row_data,
+            "section_paragraphs": section_para_data,
+            "section_headers": section_header_data
+        }
 
 
-    def _weave_paragraphs(self):
+    def _weave_paragraphs(self) -> dict[str, dict]:
         """
         Weave a single paragraph according to the prompt/constructor
         """
@@ -88,8 +105,9 @@ class WordWeaver:
                     )
                 }
         log.info("Finished Processing Paragraphs")
+        return paragraph_data
 
-    def _weave_tables(self):
+    def _weave_tables(self) -> dict[str, dict]:
         """
         Translate tables according to the prompt/construcot
         """
@@ -106,18 +124,18 @@ class WordWeaver:
                     table_prompt=self.table_prompt,
                     purpose=self.purpose,
                     model_name=self.settings.openai_model_name,
-                    write_comments=False
+                    write_comments=True if "comments" in self.mode else False,
                 )
             }
             log.debug("Finished Processing Table = %s\n", ix_table)
         log.info("Finished Processing Tables")
+        return table_data
 
-    def _weave_section_paragraphs(self):
+    def _weave_section_paragraphs(self) -> dict[str, dict]:
         """
         Convert/Transform all section paragraphs in the document
         """
         section_data = {}
-
         for ix_section, section in tqdm(
             enumerate(self.document.sections),
             total=len(self.document.sections)
@@ -195,8 +213,9 @@ class WordWeaver:
                 "first_page_footer_paragraphs": first_page_footer_paragraph_data
             }
         log.info("Finished Processing Section Paragraphs")
+        return section_data
 
-    def _weave_section_headers(self):
+    def _weave_section_headers(self) -> dict[str, dict]:
         """
         Convert/Transform all section headers in the document
         """
@@ -216,7 +235,7 @@ class WordWeaver:
                         table_prompt=self.table_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        write_comments=True if "comments" in self.mode else False,
                         root_type="header"
                     )
                 }
@@ -230,7 +249,7 @@ class WordWeaver:
                         table_prompt=self.table_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        write_comments=True if "comments" in self.mode else False,
                         root_type="header"
                     )
                 }
@@ -244,7 +263,7 @@ class WordWeaver:
                         table_prompt=self.table_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        write_comments=True if "comments" in self.mode else False,
                         root_type="header"
                     )
                 }
@@ -258,7 +277,7 @@ class WordWeaver:
                         table_prompt=self.table_prompt,
                         purpose=self.purpose,
                         model_name=self.settings.openai_model_name,
-                        write_comments=False,
+                        write_comments=True if "comments" in self.mode else False,
                         root_type="header"
                     )
                 }
@@ -271,3 +290,4 @@ class WordWeaver:
                 "first_page_footer_tables": first_page_footer_table_data
             }
         log.info("Finished Processing Section Headers")
+        return section_data

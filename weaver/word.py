@@ -22,16 +22,18 @@ log = logging.getLogger(__name__)
 
 def transform_table(
     table,
-    table_prompt: str,
+    table_prompt: str | None,
     purpose: str,
     model_name: str,
     write_comments: bool,
     root_type: str = "table",
-) -> dict[Any, Any]:
+) -> dict[str, dict]:
     """
     Primary function for translation a paragraph into
     the tgt language
     """
+    if table_prompt is None:
+        return {}
     row_data = {}
     transformed_texts = []  # Record For Merged/Duplicates
     for ix_row, row in enumerate(table.rows):
@@ -137,7 +139,7 @@ def transform_paragraph(
     model_name: str,
     mode: Literal["comments_only", "transform_only", "transform_and_comments"],
     root_type: str = "paragraph",
-) -> None:
+) -> dict[str, dict]:
     """
     Primary function for translation a paragraph into
     the tgt language
@@ -192,6 +194,7 @@ def transform_paragraph(
                 "translation": run.text,
                 "translated": translated,
             }
+    return run_data
 
 
 def cleanup_bad_runs(para):
@@ -285,6 +288,7 @@ def transform_text(
         return src_text, False, False
 
     # Translate
+    orig_src_text = copy.deepcopy(src_text)
     src_text, transforms_dict = parse_and_prepare_src_text_transforms(src_text=src_text)
     tgt_text = generate_transformation(
         src_text=src_text,
@@ -292,6 +296,9 @@ def transform_text(
         purpose=purpose,
         model_name=model_name
     )
+    # Catch failed transformation
+    if tgt_text is None:
+        return orig_src_text, False, False
     tgt_text = reapply_src_text_transforms(
         tgt_text=tgt_text,
         transforms_dict=transforms_dict
@@ -305,21 +312,25 @@ def generate_transformation(
     prompt: str,
     purpose: str,
     model_name: str
-) -> str:
+) -> str | None:
     """
     Generates Text For A Given Prompt
     """
     user_prompt = (
-        "You are a tool used to apply user-specified transformations to text."
-        "The user can specify its purpose, the prompt and the input text."
-        "Please respond with a json of the form {'tgt_text': 'translated text'}."
+        "You are a tool used to apply user-specified transformations to text. "
+        "The user can specify its purpose, the prompt and the input text. "
+        "Please avoid using any filler like 'as a consultant' or 'I have reviewd' and be direct "
+        "by only giving the necessary information."
+        "if you are commenting/reviewing, otherwise just transform the text inplace."
+        "If you can not respons with something useful, just respond with 'SKIP_REQUEST'."
+        "Please respond with a json of the form {'tgt_text': 'your response'}."
         f"""
         Task Purpose: {purpose}
         Prompt: {prompt}
         Input Text: {src_text}
         """
     )
-    for i in range(5):
+    for i in range(3):
         try:
             completions = openai.chat.completions.create(
                     model=model_name,
@@ -332,18 +343,20 @@ def generate_transformation(
             message = completions.choices[0].message.content
             if message is None:
                 raise ValueError("No Response From OpenAI")
+            if "SKIP_REQUEST" in message:
+                return None
             assert message is not None
             message = json.loads(message)
             assert isinstance(message, dict)
             if "tgt_text" not in message:
                 raise ValueError("No Translation Found")
             break
-        except Exception as e: # pylint: disable=broad-except
-            if i < 5:
+        except Exception: # pylint: disable=broad-except
+            if i < 2:
                 time.sleep(1)  # wait for 1 second before trying again
                 continue
             else:
-                raise e  # if after 3 attempts it still fails, raise the exception.
+                return None
     assert isinstance(message, dict)
     return message["tgt_text"]
 
@@ -517,7 +530,8 @@ def check_less_than_two_letters(input_str):
         return True
     else:
         return False
-    
+
+
 def reapply_src_text_transforms(tgt_text: str, transforms_dict: dict) -> str:
     """
     Re-append Adjustments made prior to transformation
