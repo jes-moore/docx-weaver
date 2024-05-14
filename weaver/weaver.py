@@ -31,7 +31,7 @@ class WordWeaver:
         paragraph_prompt: str,
         table_prompt: str | None,
         mode: Literal["comments_only", "transform_only", "transform_and_comments"],
-        openai_model_name: Literal["gpt-4-turbo", "gpt-3.5-turbo"] = "gpt-3.5-turbo"
+        openai_model_name: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4o"] = "gpt-4o"
     ):
         assert mode in ["comments_only", "transform_only", "transform_and_comments"]
         assert isinstance(purpose, str)
