@@ -121,7 +121,7 @@ def transform_table(
                             if write_comments:
                                 run.add_comment(
                                     text=total_original,
-                                    author='WordWeaver',
+                                    author='DocxWeaver',
                                     initials="WW",
                                     dtime=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d")
                                 )
@@ -182,7 +182,7 @@ def transform_paragraph(
                     if mode in ["transform_and_comments", "comments_only"]:
                         run.add_comment(
                             text=comment,
-                            author='WordWeaver',
+                            author='DocxWeaver',
                             initials="WW",
                             dtime=pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d")
                         )

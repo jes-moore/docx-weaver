@@ -7,10 +7,10 @@ import logging
 from tqdm import tqdm
 from docx import Document
 from . import word
-from .settings import WordWeaverSettings
+from .settings import DocxWeaverSettings
 log = logging.getLogger(__name__)
 
-class WordWeaver:
+class DocxWeaver:
     """
     Class to Convert/Translate and otherwise mutate Word Documents
     filename: str - Path to the Word Document
@@ -36,7 +36,7 @@ class WordWeaver:
         assert mode in ["comments_only", "transform_only", "transform_and_comments"]
         assert isinstance(purpose, str)
         assert isinstance(paragraph_prompt, str)
-        self.settings = WordWeaverSettings(openai_model_name=openai_model_name)
+        self.settings = DocxWeaverSettings(openai_model_name=openai_model_name)
         self.filename = filename
         self.document = Document(filename)
         self.table_prompt = table_prompt

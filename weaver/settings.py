@@ -1,5 +1,5 @@
 """
-Contains settings for WordWeaver
+Contains settings for DocxWeaver
 """
 
 from typing import Literal
@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 # Logging
 log = logging.getLogger(__name__)
 
-class WordWeaverSettings(BaseSettings):
+class DocxWeaverSettings(BaseSettings):
     """
     Settings class, loaded from environment
     """
@@ -18,4 +18,4 @@ class WordWeaverSettings(BaseSettings):
     openai_model_name: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4o"]
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        log.info("WordWeaver Config: %s", self.model_dump_json())
+        log.info("DocxWeaver Config: %s", self.model_dump_json())

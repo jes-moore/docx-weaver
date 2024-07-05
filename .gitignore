@@ -2,8 +2,8 @@
 **pycache**
 *.docx
 *.zip
-wordweaver.egg-info
+docxweaver.egg-info
 build/*
 dist/*
-word_weaver.egg-info/*
-word_weaver_docx.egg-info/*
+docx_weaver.egg-info/*
+docx_weaver_docx.egg-info/*
