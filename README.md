@@ -16,6 +16,8 @@ To use WordWeaver, you can build the container use make build-docker-image, or w
 
 ## Usage
 ```python
+from weaver.weaver import WordWeaver
+
 # Comment Only
 doc = WordWeaver(
     filename="fake-consulting-doc.docx",
