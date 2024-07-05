@@ -9,27 +9,43 @@ WordWeaver is a Python class designed to convert, translate, and modify Word doc
 - **Transform and Comments**: Transforms the document's text and retains the original text in comments for reference.
 
 ## Requirements
-- See Dockerfile / Devcontainer
-
-## Installation
-To use WordWeaver, install the required packages using pip:
-
-# WordWeaver
-
-## Overview
-WordWeaver is a Python class designed to convert, translate, and modify Word documents in various ways, such as adding comments, transforming text, and both. It's suitable for automating document workflows where changes to the document based on dynamic inputs are required.
-
-## Features
-- **Comments Only**: Adds comments to the document without altering the text.
-- **Transform Only**: Modifies the document's text in-place without adding comments.
-- **Transform and Comments**: Transforms the document's text and retains the original text in comments for reference.
-
-## Requirements
 - Available in Dockerfile
 
 ## Installation
 To use WordWeaver, you can build the container use make build-docker-image, or work in the .devcontainer provided.
 
+## Usage
+```python
+# Comment Only
+doc = WordWeaver(
+    filename="fake-consulting-doc.docx",
+    purpose="You are reviewing a consulting agreement, from the perspective of the consultant.",
+    paragraph_prompt="Review this and highlight any issues or concerns.",
+    table_prompt=None,
+    mode="comments_only",
+)
+weave_result = doc.weave_document(output_fn="fake-consulting-doc-review.docx")
+
+# Transform Only
+doc = WordWeaver(
+    filename="fake-consulting-doc.docx",
+    purpose="You are converting a consulting document into one that rhymes.",
+    paragraph_prompt="Convert the following paragraph into a rhyming version.",
+    table_prompt=None,
+    mode="transform_only",
+)
+weave_result = doc.weave_document(output_fn="fake-consulting-doc-transform.docx")
+
+# Transform And Comments
+doc = WordWeaver(
+    filename="fake-consulting-doc.docx",
+    purpose="You are translating a consulting document into french.",
+    paragraph_prompt="Convert the following paragraph into french.",
+    table_prompt="Convert the following table cell into french",
+    mode="transform_and_comments",
+)
+weave_result = doc.weave_document(output_fn="fake-consulting-doc-transform-comments.docx")
+```
 
 ## Documentation
 For further details, refer to the inline comments in the WordWeaver class definition. Each method and its parameters are documented to explain their purpose and usage.
