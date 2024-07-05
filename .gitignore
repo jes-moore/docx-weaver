@@ -5,3 +5,5 @@
 wordweaver.egg-info
 build/*
 dist/*
+word_weaver.egg-info/*
+word_weaver_docx.egg-info/*

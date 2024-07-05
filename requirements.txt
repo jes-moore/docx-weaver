@@ -6,3 +6,4 @@ ipykernel==6.29.4
 openai==1.28.1
 pydantic==2.7.1
 pandas==2.2.2
+twine==5.0.0
