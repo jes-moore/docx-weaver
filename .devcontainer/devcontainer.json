@@ -1,7 +1,7 @@
 {
 	"initializeCommand": "make build-docker-image",
-	"image": "word-weaver",
-	"name": "word-weaver-dev",
+	"image": "docx-weaver",
+	"name": "docx-weaver-dev",
 	"customizations":{
 		"vscode": {
 			"extensions": [

@@ -1,5 +1,5 @@
 """
-Setup for word-weaver
+Setup for docx-weaver
 """
 
 from setuptools import setup, find_packages
@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open("requirements.txt", encoding="utf-8") as f:
     requirements = f.read().splitlines()
 setup(
-    name="word-weaver-docx",
+    name="docx-weaver",
     version="0.1.0",
     url="https://github.com/jes-moore/docx-weaver",
     author="Jesse Moore",
